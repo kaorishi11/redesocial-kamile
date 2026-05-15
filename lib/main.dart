@@ -7,15 +7,15 @@ import 'screens/login.dart';
 import 'screens/cadastro.dart';
 import 'screens/criar_post.dart';
 import 'screens/perfil.dart';
+import 'screens/mensagens.dart';
 
 Future<void> main() async {
 
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Supabase.initialize(
-    url: 'https://vaergkiaivwwiwhnsxlw.supabase.co',
-    anonKey:
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZhZXJna2lhaXZ3d2l3aG5zeGx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0OTcwNDgsImV4cCI6MjA5NDA3MzA0OH0.qB-YhxKi9KpNWG5xE6Fv7ZG9UqaHu3LxL_PeJBoHeO0',
+  await Supabase.initialize( 
+    url: 'https://vaergkiaivwwiwhnsxlw.supabase.co', 
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZhZXJna2lhaXZ3d2l3aG5zeGx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0OTcwNDgsImV4cCI6MjA5NDA3MzA0OH0.qB-YhxKi9KpNWG5xE6Fv7ZG9UqaHu3LxL_PeJBoHeO0', 
   );
 
   runApp(const MyApp());
@@ -67,6 +67,8 @@ class _MyHomePageState
 
   int notificacoes = 3;
 
+  int mensagensNaoLidas = 0;
+
   @override
   void initState() {
 
@@ -74,6 +76,16 @@ class _MyHomePageState
 
     carregarDados();
 
+    // REALTIME MENSAGENS
+    Supabase.instance.client
+        .from('messages')
+        .stream(primaryKey: ['id'])
+        .listen((event) {
+
+      carregarMensagensNaoLidas();
+    });
+
+    // LOGIN / LOGOUT
     Supabase.instance.client.auth
         .onAuthStateChange
         .listen((data) {
@@ -88,6 +100,8 @@ class _MyHomePageState
 
       final user =
           Supabase.instance.client.auth.currentUser;
+
+      await carregarMensagensNaoLidas();
 
       final postsResponse =
           await Supabase.instance.client
@@ -134,6 +148,27 @@ class _MyHomePageState
     }
   }
 
+  Future<void> carregarMensagensNaoLidas() async {
+
+    final user =
+        Supabase.instance.client.auth.currentUser;
+
+    if (user == null) return;
+
+    final response =
+        await Supabase.instance.client
+        .from('messages')
+        .select()
+        .eq('receiver_id', user.id)
+        .eq('visualizada', false);
+
+    setState(() {
+
+      mensagensNaoLidas =
+          response.length;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
 
@@ -157,6 +192,7 @@ class _MyHomePageState
           Row(
             children: [
 
+              // NAVBAR
               Container(
                 width: 250,
                 color: Colors.white,
@@ -184,12 +220,28 @@ class _MyHomePageState
                       () {},
                     ),
 
-                    navItem(
-                      Icons.messenger_outline,
-                      'Mensagens',
-                      () {},
-                    ),
+                    // MENSAGENS
+                    if (user != null)
 
+                      navItemNotificacao(
+                        Icons.messenger_outline,
+                        'Mensagens',
+                        mensagensNaoLidas,
+                        () async {
+
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  const MensagensPage(),
+                            ),
+                          );
+
+                          carregarMensagensNaoLidas();
+                        },
+                      ),
+
+                    // NOTIFICAÇÕES
                     if (user != null)
 
                       navItemNotificacao(
@@ -206,6 +258,7 @@ class _MyHomePageState
                         },
                       ),
 
+                    // LOGADO
                     if (user != null) ...[
 
                       navItem(
