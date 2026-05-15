@@ -1,4 +1,4 @@
-// Geovanna Kaori Shimada e Jamile Franquilim de Oliveira
+// Geovanna Kaori Shimada e Jamile de Oliveira Franquilim
 
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
