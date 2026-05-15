@@ -10,14 +10,17 @@ class PerfilPage extends StatefulWidget {
       _PerfilPageState();
 }
 
-class _PerfilPageState
-    extends State<PerfilPage> {
+class _PerfilPageState extends State<PerfilPage> {
 
   Map<String, dynamic>? profile;
 
   List posts = [];
 
   bool carregando = true;
+
+  final nomeController = TextEditingController();
+
+  final bioController = TextEditingController();
 
   @override
   void initState() {
@@ -53,6 +56,12 @@ class _PerfilPageState
             ascending: false,
           );
 
+      nomeController.text =
+          profileResponse['nome'] ?? '';
+
+      bioController.text =
+          profileResponse['bio'] ?? '';
+
       setState(() {
 
         profile = profileResponse;
@@ -61,6 +70,40 @@ class _PerfilPageState
 
         carregando = false;
       });
+
+    } catch (e) {
+
+      print(e);
+    }
+  }
+
+  Future<void> salvarPerfil() async {
+
+    final user =
+        Supabase.instance.client.auth.currentUser;
+
+    if (user == null) return;
+
+    try {
+
+      await Supabase.instance.client
+          .from('profiles')
+          .update({
+
+        'nome': nomeController.text,
+
+        'bio': bioController.text,
+
+      }).eq('id', user.id);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+
+        const SnackBar(
+          content: Text(
+            'Perfil atualizado com sucesso!',
+          ),
+        ),
+      );
 
     } catch (e) {
 
@@ -130,17 +173,64 @@ class _PerfilPageState
 
               const SizedBox(height: 20),
 
-              Text(
+              Padding(
+                padding: const EdgeInsets.all(16),
 
-                profile!['nome'] ?? '',
+                child: Column(
+                  children: [
 
-                style: const TextStyle(
-                  fontSize: 30,
+                    TextField(
+                      controller: nomeController,
+
+                      decoration: const InputDecoration(
+                        labelText: 'Nome',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    TextField(
+                      controller: bioController,
+
+                      maxLines: 3,
+
+                      decoration: const InputDecoration(
+                        labelText: 'Bio',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    SizedBox(
+                      width: double.infinity,
+
+                      child: ElevatedButton(
+
+                        onPressed: salvarPerfil,
+
+                        child: const Text(
+                          'Salvar Alterações',
+                        ),
+                      ),
+                    ),
+
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              const Text(
+                'Minhas Postagens',
+                style: TextStyle(
+                  fontSize: 22,
                   fontWeight: FontWeight.bold,
                 ),
               ),
 
-              const SizedBox(height: 30),
+              const SizedBox(height: 10),
 
               Expanded(
 
