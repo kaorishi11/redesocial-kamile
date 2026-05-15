@@ -76,7 +76,6 @@ class _MyHomePageState
 
     carregarDados();
 
-    // REALTIME MENSAGENS
     Supabase.instance.client
         .from('messages')
         .stream(primaryKey: ['id'])
@@ -85,7 +84,6 @@ class _MyHomePageState
       carregarMensagensNaoLidas();
     });
 
-    // LOGIN / LOGOUT
     Supabase.instance.client.auth
         .onAuthStateChange
         .listen((data) {
@@ -192,7 +190,6 @@ class _MyHomePageState
           Row(
             children: [
 
-              // NAVBAR
               Container(
                 width: 250,
                 color: Colors.white,
@@ -209,7 +206,7 @@ class _MyHomePageState
                       padding: const EdgeInsets.all(16),
 
                       child: Image.asset(
-                        'assets/imagens/kamilelogo.png',
+                        'logo.png',
                         height: 50,
                       ),
                     ),
@@ -220,7 +217,6 @@ class _MyHomePageState
                       () {},
                     ),
 
-                    // MENSAGENS
                     if (user != null)
 
                       navItemNotificacao(
@@ -241,7 +237,6 @@ class _MyHomePageState
                         },
                       ),
 
-                    // NOTIFICAÇÕES
                     if (user != null)
 
                       navItemNotificacao(
@@ -258,7 +253,6 @@ class _MyHomePageState
                         },
                       ),
 
-                    // LOGADO
                     if (user != null) ...[
 
                       navItem(
@@ -331,7 +325,6 @@ class _MyHomePageState
 
                     const Spacer(),
 
-                    // PERFIL
                     if (user != null)
 
                       Padding(
@@ -396,7 +389,6 @@ class _MyHomePageState
                 ),
               ),
 
-              // FEED
               Expanded(
                 child: Container(
 
@@ -440,17 +432,9 @@ class _MyHomePageState
                   ),
                 ),
               ),
-
-              // LADO DIREITO
-              Container(
-                width: 300,
-                color: Colors.white,
-              ),
-
             ],
           ),
 
-          // PAINEL NOTIFICAÇÕES
           if (mostrarNotificacoes)
 
             Positioned(
@@ -542,7 +526,6 @@ class _MyHomePageState
     );
   }
 
-  // NAV ITEM NORMAL
   Widget navItem(
     IconData icon,
     String texto,
@@ -587,7 +570,6 @@ class _MyHomePageState
     );
   }
 
-  // NAV ITEM COM BADGE
   Widget navItemNotificacao(
     IconData icon,
     String texto,
@@ -672,7 +654,6 @@ class _MyHomePageState
     );
   }
 
-  // BOTÃO LOGIN/CADASTRO
   Widget navButton(
     String texto,
     VoidCallback onTap,
@@ -693,7 +674,6 @@ class _MyHomePageState
     );
   }
 
-  // POST
   Widget post(Map postData) {
 
     final profileData =
