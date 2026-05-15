@@ -7,15 +7,15 @@ import 'screens/login.dart';
 import 'screens/cadastro.dart';
 import 'screens/criar_post.dart';
 import 'screens/perfil.dart';
+import 'screens/mensagens.dart';
 
 Future<void> main() async {
 
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Supabase.initialize(
-    url: 'https://vaergkiaivwwiwhnsxlw.supabase.co',
-    anonKey:
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZhZXJna2lhaXZ3d2l3aG5zeGx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0OTcwNDgsImV4cCI6MjA5NDA3MzA0OH0.qB-YhxKi9KpNWG5xE6Fv7ZG9UqaHu3LxL_PeJBoHeO0',
+  await Supabase.initialize( 
+    url: 'https://vaergkiaivwwiwhnsxlw.supabase.co', 
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZhZXJna2lhaXZ3d2l3aG5zeGx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0OTcwNDgsImV4cCI6MjA5NDA3MzA0OH0.qB-YhxKi9KpNWG5xE6Fv7ZG9UqaHu3LxL_PeJBoHeO0', 
   );
 
   runApp(const MyApp());
@@ -67,12 +67,22 @@ class _MyHomePageState
 
   int notificacoes = 3;
 
+  int mensagensNaoLidas = 0;
+
   @override
   void initState() {
 
     super.initState();
 
     carregarDados();
+
+    Supabase.instance.client
+        .from('messages')
+        .stream(primaryKey: ['id'])
+        .listen((event) {
+
+      carregarMensagensNaoLidas();
+    });
 
     Supabase.instance.client.auth
         .onAuthStateChange
@@ -88,6 +98,8 @@ class _MyHomePageState
 
       final user =
           Supabase.instance.client.auth.currentUser;
+
+      await carregarMensagensNaoLidas();
 
       final postsResponse =
           await Supabase.instance.client
@@ -134,6 +146,27 @@ class _MyHomePageState
     }
   }
 
+  Future<void> carregarMensagensNaoLidas() async {
+
+    final user =
+        Supabase.instance.client.auth.currentUser;
+
+    if (user == null) return;
+
+    final response =
+        await Supabase.instance.client
+        .from('messages')
+        .select()
+        .eq('receiver_id', user.id)
+        .eq('visualizada', false);
+
+    setState(() {
+
+      mensagensNaoLidas =
+          response.length;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
 
@@ -173,7 +206,7 @@ class _MyHomePageState
                       padding: const EdgeInsets.all(16),
 
                       child: Image.asset(
-                        'assets/imagens/kamilelogo.png',
+                        'logo.png',
                         height: 50,
                       ),
                     ),
@@ -184,11 +217,25 @@ class _MyHomePageState
                       () {},
                     ),
 
-                    navItem(
-                      Icons.messenger_outline,
-                      'Mensagens',
-                      () {},
-                    ),
+                    if (user != null)
+
+                      navItemNotificacao(
+                        Icons.messenger_outline,
+                        'Mensagens',
+                        mensagensNaoLidas,
+                        () async {
+
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  const MensagensPage(),
+                            ),
+                          );
+
+                          carregarMensagensNaoLidas();
+                        },
+                      ),
 
                     if (user != null)
 
@@ -278,7 +325,6 @@ class _MyHomePageState
 
                     const Spacer(),
 
-                    // PERFIL
                     if (user != null)
 
                       Padding(
@@ -343,7 +389,6 @@ class _MyHomePageState
                 ),
               ),
 
-              // FEED
               Expanded(
                 child: Container(
 
@@ -387,17 +432,9 @@ class _MyHomePageState
                   ),
                 ),
               ),
-
-              // LADO DIREITO
-              Container(
-                width: 300,
-                color: Colors.white,
-              ),
-
             ],
           ),
 
-          // PAINEL NOTIFICAÇÕES
           if (mostrarNotificacoes)
 
             Positioned(
@@ -489,7 +526,6 @@ class _MyHomePageState
     );
   }
 
-  // NAV ITEM NORMAL
   Widget navItem(
     IconData icon,
     String texto,
@@ -534,7 +570,6 @@ class _MyHomePageState
     );
   }
 
-  // NAV ITEM COM BADGE
   Widget navItemNotificacao(
     IconData icon,
     String texto,
@@ -619,7 +654,6 @@ class _MyHomePageState
     );
   }
 
-  // BOTÃO LOGIN/CADASTRO
   Widget navButton(
     String texto,
     VoidCallback onTap,
@@ -640,7 +674,6 @@ class _MyHomePageState
     );
   }
 
-  // POST
   Widget post(Map postData) {
 
     final profileData =
